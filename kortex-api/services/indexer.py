@@ -12,6 +12,15 @@ from services import rag
 
 logger = logging.getLogger(__name__)
 
+_http_client: httpx.AsyncClient | None = None
+
+
+def _get_client() -> httpx.AsyncClient:
+    global _http_client
+    if _http_client is None or _http_client.is_closed:
+        _http_client = httpx.AsyncClient(timeout=60)
+    return _http_client
+
 SUPPORTED_EXT = {
     ".py": "python", ".js": "javascript", ".jsx": "javascript",
     ".ts": "typescript", ".tsx": "typescript", ".go": "go",
@@ -31,12 +40,12 @@ MAX_FILE_SIZE = 300_000  # 300KB
 
 
 async def get_embedding(text: str) -> List[float]:
-    async with httpx.AsyncClient(timeout=60) as client:
-        r = await client.post(
-            f"{settings.OLLAMA_URL}/api/embed",
-            json={"model": settings.EMBED_MODEL, "input": text},
-        )
-        return r.json()["embeddings"][0]
+    client = _get_client()
+    r = await client.post(
+        f"{settings.OLLAMA_URL}/api/embed",
+        json={"model": settings.EMBED_MODEL, "input": text},
+    )
+    return r.json()["embeddings"][0]
 
 
 def chunk_python(content: str, display_path: str) -> List[Tuple[str, dict]]:

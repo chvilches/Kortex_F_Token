@@ -1,8 +1,9 @@
 """Project registry backed by a JSON file."""
 import json
 import logging
+import threading
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional
 
@@ -11,6 +12,7 @@ from models.schemas import Project, ProjectCreate
 
 logger = logging.getLogger(__name__)
 REGISTRY = Path(settings.DATA_DIR) / "projects.json"
+_lock = threading.Lock()
 
 
 def _load() -> dict:
@@ -28,18 +30,19 @@ def _save(data: dict):
 
 
 def create(data: ProjectCreate) -> Project:
-    reg = _load()
-    pid = str(uuid.uuid4())[:8]
-    project = Project(
-        id=pid,
-        name=data.name,
-        path=data.path,
-        description=data.description,
-        created_at=datetime.utcnow(),
-    )
-    reg[pid] = project.model_dump()
-    _save(reg)
-    return project
+    with _lock:
+        reg = _load()
+        pid = str(uuid.uuid4())[:8]
+        project = Project(
+            id=pid,
+            name=data.name,
+            path=data.path,
+            description=data.description,
+            created_at=datetime.now(timezone.utc),
+        )
+        reg[pid] = project.model_dump()
+        _save(reg)
+        return project
 
 
 def get(project_id: str) -> Optional[Project]:
@@ -53,18 +56,20 @@ def all_projects() -> List[Project]:
 
 
 def update(project_id: str, **kwargs) -> Optional[Project]:
-    reg = _load()
-    if project_id not in reg:
-        return None
-    reg[project_id].update({k: v for k, v in kwargs.items() if v is not None})
-    _save(reg)
-    return Project(**reg[project_id])
+    with _lock:
+        reg = _load()
+        if project_id not in reg:
+            return None
+        reg[project_id].update({k: v for k, v in kwargs.items() if v is not None})
+        _save(reg)
+        return Project(**reg[project_id])
 
 
 def delete(project_id: str) -> bool:
-    reg = _load()
-    if project_id not in reg:
-        return False
-    del reg[project_id]
-    _save(reg)
-    return True
+    with _lock:
+        reg = _load()
+        if project_id not in reg:
+            return False
+        del reg[project_id]
+        _save(reg)
+        return True

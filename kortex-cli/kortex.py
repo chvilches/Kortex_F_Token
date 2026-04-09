@@ -116,7 +116,7 @@ def cmd_status(args):
     projects = _api("GET", "/projects")
     watching = root.get("watching", [])
 
-    print(f"\n🤖 Kortex Supervisor v{root.get('version','1.0.0')}")
+    print(f"\n🤖 Kortex F*Token v{root.get('version','1.0.0')}")
     print(f"   API: {API}")
     print(f"   Proyectos: {len(projects)}")
     print(f"   Vigilando: {len(watching)}")
@@ -182,7 +182,7 @@ COMMANDS = {
 
 def main():
     if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help", "help"):
-        print("🤖 Kortex — Supervisor de Claude Code\n")
+        print("🤖 Kortex F*Token — Supervisor de Claude Code\n")
         print("Uso: kortex <comando> [opciones]\n")
         print("Comandos:")
         for name, (_, desc) in COMMANDS.items():

@@ -1,4 +1,4 @@
-"""Kortex Supervisor API — FastAPI main entry point."""
+"""Kortex F*Token API — FastAPI main entry point."""
 import asyncio
 import logging
 from contextlib import asynccontextmanager
@@ -35,7 +35,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Kortex Supervisor",
+    title="Kortex F*Token",
     description="RAG-powered Claude Code supervisor using local llama3.2",
     version="1.0.0",
     lifespan=lifespan,
@@ -58,7 +58,7 @@ app.include_router(prompt_router)
 @app.get("/")
 async def root():
     return {
-        "service": "Kortex Supervisor",
+        "service": "Kortex F*Token",
         "version": "1.0.0",
         "status": "running",
         "watching": watcher_manager.list(),

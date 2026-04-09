@@ -50,16 +50,17 @@ class _Handler(FileSystemEventHandler):
             files = list(self._pending.keys())
             self._pending.clear()
         from services.indexer import index_file
-        for fp in files:
-            logger.info(f"[watcher] auto-indexing: {fp}")
-            fut = asyncio.run_coroutine_threadsafe(
-                index_file(fp, self.project_id), self.loop
-            )
-            try:
-                n = fut.result(timeout=60)
-                logger.info(f"[watcher] indexed {n} chunks from {fp}")
-            except Exception as e:
-                logger.error(f"[watcher] error: {e}")
+
+        async def _index_batch():
+            for fp in files:
+                logger.info(f"[watcher] auto-indexing: {fp}")
+                try:
+                    n = await index_file(fp, self.project_id)
+                    logger.info(f"[watcher] indexed {n} chunks from {fp}")
+                except Exception as e:
+                    logger.error(f"[watcher] error indexing {fp}: {e}")
+
+        asyncio.run_coroutine_threadsafe(_index_batch(), self.loop)
 
 
 class WatcherManager:

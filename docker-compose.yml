@@ -1,7 +1,7 @@
 services:
   ollama:
     image: docker.io/ollama/ollama:latest
-    container_name: ollama-kortex4
+    container_name: kortex-ollama
     ports:
       - "11434:11434"
     volumes:

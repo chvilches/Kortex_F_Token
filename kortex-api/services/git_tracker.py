@@ -80,9 +80,10 @@ async def index_commits(project_path: str, project_id: str) -> dict:
     return {"commits_indexed": indexed}
 
 
-def install_git_hook(project_path: str, api_url: str = "http://localhost:8080") -> bool:
-    import os
+def install_git_hook(project_path: str, api_url: str | None = None) -> bool:
     from pathlib import Path
+    if api_url is None:
+        api_url = f"http://localhost:{settings.API_HOST_PORT}"
     hooks_dir = Path(host_to_container(project_path)) / ".git" / "hooks"
     if not hooks_dir.exists():
         return False

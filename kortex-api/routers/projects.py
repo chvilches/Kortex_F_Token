@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
-from datetime import datetime
+from datetime import datetime, timezone
 
+from config import settings, host_to_container
 from models.schemas import ProjectCreate, IngestRequest, WatchRequest, GitHookRequest
 from services import projects as proj_svc
 from services import indexer, git_tracker
@@ -17,6 +18,12 @@ async def list_projects():
 
 @router.post("")
 async def create_project(data: ProjectCreate):
+    if not data.path.startswith(settings.HOST_HOME):
+        raise HTTPException(400, f"Path must be under {settings.HOST_HOME}")
+    from pathlib import Path
+    container_path = host_to_container(data.path)
+    if not Path(container_path).is_dir():
+        raise HTTPException(400, f"Directory not found: {data.path}")
     return proj_svc.create(data)
 
 
@@ -53,7 +60,7 @@ async def ingest_codebase(req: IngestRequest):
     stats = await indexer.index_codebase(p.path, req.project_id)
     proj_svc.update(req.project_id,
                     indexed_files=stats["files_indexed"],
-                    last_indexed=datetime.utcnow())
+                    last_indexed=datetime.now(timezone.utc))
     # Also index git history
     git_stats = await git_tracker.index_commits(p.path, req.project_id)
     return {**stats, **git_stats}
@@ -68,19 +75,15 @@ async def git_hook(req: GitHookRequest):
         return {"ok": False, "reason": "project not registered"}
     p = matched[0]
     # Re-index changed files from latest commit
-    from services.git_tracker import get_recent_commits, get_commit_diff
+    from services.git_tracker import get_recent_commits, _git
     commits = get_recent_commits(p.path, n=1)
     if commits:
-        diff_text = get_commit_diff(p.path, commits[0]["hash"])
-        # Extract changed files from diff
-        changed = [
-            line.split(" ")[-1].strip()
-            for line in diff_text.splitlines()
-            if line.startswith("+++") and "b/" in line
-        ]
+        # Use git diff-tree for reliable file listing
+        cwd = host_to_container(p.path)
+        changed_out = _git(["diff-tree", "--no-commit-id", "--name-only", "-r", commits[0]["hash"]], cwd)
+        changed = [line.strip() for line in changed_out.splitlines() if line.strip()]
         indexed = 0
         for rel in changed:
-            rel = rel.replace("b/", "", 1)
             host_path = f"{p.path}/{rel}"
             n = await indexer.index_file(host_path, p.id, f"{p.path}/{rel}")
             indexed += n

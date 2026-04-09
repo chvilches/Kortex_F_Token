@@ -8,14 +8,15 @@ class Settings(BaseSettings):
     EMBED_MODEL: str = "nomic-embed-text"
     CHAT_MODEL: str = "llama3.2"
 
+    API_HOST_PORT: int = 8080
+
     # Path mapping: host path -> container path
     HOST_HOME: str = "/home/user"
     CONTAINER_HOME: str = "/home/user"
 
     DATA_DIR: str = "/app/data"
 
-    class Config:
-        env_file = ".env"
+    model_config = {"env_file": ".env"}
 
 
 settings = Settings()

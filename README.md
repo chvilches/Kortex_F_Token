@@ -18,7 +18,7 @@
 
 ## ¿Qué es esto?
 
-Kortex Supervisor actúa como **capa inteligente entre tú y Claude Code**. El problema que resuelve: cada vez que abres Claude Code debes re-explicar el contexto del proyecto, gastando tokens valiosos en información que ya conoces.
+Kortex F*Token actúa como **capa inteligente entre tú y Claude Code**. El problema que resuelve: cada vez que abres Claude Code debes re-explicar el contexto del proyecto, gastando tokens valiosos en información que ya conoces.
 
 **Kortex lo hace por ti:**
 
@@ -80,7 +80,7 @@ Todo corre **localmente** — sin APIs externas, sin costos, sin privacidad comp
 - Docker + Docker Compose
 - GPU AMD (configurado para ROCm/Vulkan) — o quita los `devices` del compose para CPU
 - ~30 GB de espacio (modelos Ollama)
-- Python 3.8+ (solo para el CLI)
+- Python 3.12+ (solo para el CLI)
 
 ---
 
@@ -89,8 +89,8 @@ Todo corre **localmente** — sin APIs externas, sin costos, sin privacidad comp
 ### 1. Clonar y levantar
 
 ```bash
-git clone <repo>
-cd kortex
+git clone https://github.com/chvilches/Kortex_F_Token.git
+cd Kortex_F_Token
 docker compose up -d
 ```
 
@@ -245,6 +245,7 @@ Variables de entorno del servicio `kortex-api` en `docker-compose.yml`:
 | `CHROMA_HOST` | `chromadb` | Host de ChromaDB |
 | `EMBED_MODEL` | `nomic-embed-text` | Modelo de embeddings |
 | `CHAT_MODEL` | `llama3.2` | Modelo para comprimir prompts |
+| `API_HOST_PORT` | `8080` | Puerto expuesto de la API (usado por el git hook) |
 | `HOST_HOME` | `/home/user` | Home del host (para path mapping) |
 | `CONTAINER_HOME` | `/home/user` | Punto de montaje dentro del contenedor |
 

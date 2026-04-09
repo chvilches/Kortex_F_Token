@@ -8,6 +8,15 @@ from config import settings
 
 logger = logging.getLogger(__name__)
 
+_http_client: httpx.AsyncClient | None = None
+
+
+def _get_client() -> httpx.AsyncClient:
+    global _http_client
+    if _http_client is None or _http_client.is_closed:
+        _http_client = httpx.AsyncClient(timeout=120)
+    return _http_client
+
 SYSTEM = (
     "You are an expert at compressing code context into minimal, high-density prompts for Claude Code. "
     "Output ONLY the final prompt. No explanations, no preamble, no markdown wrapper."
@@ -77,18 +86,18 @@ async def build_prompt(task: str, chunks: List[dict]) -> str:
     user_prompt = TEMPLATE.format(task=task, context=context, patterns=patterns)
 
     try:
-        async with httpx.AsyncClient(timeout=120) as client:
-            r = await client.post(
-                f"{settings.OLLAMA_URL}/api/generate",
-                json={
-                    "model": settings.CHAT_MODEL,
-                    "system": SYSTEM,
-                    "prompt": user_prompt,
-                    "stream": False,
-                    "options": {"num_predict": 1200, "temperature": 0.15, "top_p": 0.9},
-                },
-            )
-            return r.json()["response"].strip()
+        client = _get_client()
+        r = await client.post(
+            f"{settings.OLLAMA_URL}/api/generate",
+            json={
+                "model": settings.CHAT_MODEL,
+                "system": SYSTEM,
+                "prompt": user_prompt,
+                "stream": False,
+                "options": {"num_predict": 1200, "temperature": 0.15, "top_p": 0.9},
+            },
+        )
+        return r.json()["response"].strip()
     except Exception as e:
         logger.error(f"Prompt build error: {e}")
         # Fallback: return structured raw context
