@@ -1,0 +1,14 @@
+# Dependencias
+__pycache__/
+*.pyc
+
+# Docker y volumenes
+gemma-api/data/
+docker-compose.override.yml
+.env
+
+# MacOS
+.DS_Store
+
+# Git
+/.git/
